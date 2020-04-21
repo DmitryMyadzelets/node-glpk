@@ -724,9 +724,6 @@ namespace NodeGLPK {
                         V8CHECKBOOL(!val->IsFunction(), "cbFunc: should be a function");
                         iocp->cb_func = IocpCallback;
                         iocp->cb_info = new Nan::Callback(Local<Function>::Cast(val));
-                    } else if (keystr == "cbReasons"){
-                        V8CHECKBOOL(!val->IsInt32(), "cbReason: should be int32");
-                        iocp->cb_reasons = val->Int32Value();
                     } else {
                         std::string error("Unknow field: ");
                         error += keystr;
