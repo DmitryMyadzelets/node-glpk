@@ -338,7 +338,7 @@ namespace NodeGLPK {
             Mathprog* mp = ObjectWrap::Unwrap<Mathprog>(info.Holder());
             V8CHECK(!mp->handle, "object deleted");
             V8CHECK(mp->thread, "an async operation is inprogress");
-            # char * msg = glp_mpl_getlasterror(mp->handle);
+            // char * msg = glp_mpl_getlasterror(mp->handle);
             char * msg = "Not implemented";
             if (msg)
                 info.GetReturnValue().Set(Nan::New<String>(msg).ToLocalChecked());
