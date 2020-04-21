@@ -11,13 +11,14 @@ using namespace NodeGLPK;
 
 extern "C" {
     
-    void _ErrorHook(const char *s){
-        throw std::string(s);
+    void _ErrorHook(void *info){
+        throw std::string("Abnormal termination");
     }
 
-    void _TermHook(const char *s){
+    int _TermHook(void *info, const char *s){
         fputs(s, stdout);
         fflush(stdout);
+        return 0;
     }
 
     NAN_METHOD(TermOutput) {
@@ -25,14 +26,14 @@ extern "C" {
         V8CHECK(!info[0]->IsBoolean(), "Wrong arguments");
         
         if (info[0]->BooleanValue()) {
-            GLP_CATCH_RET(glp_term_hook(_TermHook);)
+            GLP_CATCH_RET(glp_term_hook(_TermHook, NULL);)
         } else {
-            GLP_CATCH_RET(glp_term_hook(NULL);)
+            GLP_CATCH_RET(glp_term_hook(NULL, NULL);)
         }
     }
     
     void Init(Handle<Object> exports) {
-        glp_error_hook(_ErrorHook);
+        glp_error_hook(_ErrorHook, NULL);
 
         exports->Set(Nan::New<String>("termOutput").ToLocalChecked(), Nan::New<FunctionTemplate>(TermOutput)->GetFunction());
         
