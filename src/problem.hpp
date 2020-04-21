@@ -106,7 +106,6 @@ namespace NodeGLPK {
             Nan::SetPrototypeMethod(tpl, "getNumInt", GetNumInt);
             Nan::SetPrototypeMethod(tpl, "getNumBin", GetNumBin);
             Nan::SetPrototypeMethod(tpl, "intoptSync", IntoptSync);
-            Nan::SetPrototypeMethod(tpl, "intopt", Intopt);
             Nan::SetPrototypeMethod(tpl, "readProbSync", ReadProbSync);
             Nan::SetPrototypeMethod(tpl, "readProb", ReadProb);
             Nan::SetPrototypeMethod(tpl, "writeProbSync", WriteProbSync);
@@ -751,87 +750,6 @@ namespace NodeGLPK {
                       if (iocp.cb_info) delete (Nan::Callback*)iocp.cb_info;
                       if (iocp.save_sol) delete[] iocp.save_sol;
             )
-        }
-        
-        class IntoptWorker : public Nan::AsyncWorker {
-        public:
-            IntoptWorker(Nan::Callback *callback, Problem *lp)
-            : Nan::AsyncWorker(callback), lp(lp){
-                glp_init_iocp(&parm);
-                glp_init_mip_ctx(&ctx);
-                ctx.parm = &parm;
-                state = 0;
-            }
-            
-            ~IntoptWorker(){
-                if (parm.cb_info) delete (Nan::Callback*)parm.cb_info;
-                if (parm.save_sol) delete[] parm.save_sol;
-            }
-            
-            void Execute () {
-                try {
-                    if (state) {
-                        glp_intopt_run(&ctx);
-                    } else {
-                        state = 1;
-                        glp_intopt_start(lp->handle, &ctx);
-                    }
-                } catch (std::string s){
-                    ctx.done = 1;
-                    SetErrorMessage(s.c_str());
-                }
-            }
-            void WorkComplete() {
-                lp->thread = false;
-                Nan::HandleScope scope;
-                if (ctx.done) {
-                    state = 2;
-                    glp_intopt_stop(lp->handle, &ctx);
-                    if (ErrorMessage() == NULL)
-                        HandleOKCallback();
-                    else
-                        HandleErrorCallback();
-                    
-                    delete callback;
-                    callback = NULL;
-                } else {
-                    parm.cb_func(ctx.tree, parm.cb_info);
-                    lp->thread = true;
-                    Nan::AsyncQueueWorker(this);
-                }
-            }
-            
-            void HandleOKCallback(){
-                Local<Value> info[] = {Nan::Null(), Nan::New<Int32>(ctx.ret)};
-                callback->Call(2, info);
-            }
-            
-            void Destroy() {
-                if (state == 2) delete this;
-            }
-        public:
-            int state;
-            Problem *lp;
-            glp_iocp parm;
-            glp_mip_ctx ctx;
-        };
-        
-        static NAN_METHOD(Intopt) {
-            V8CHECK(info.Length() != 2, "Wrong number of arguments");
-            V8CHECK(!(info[0]->IsObject() || info[0]->IsNull()) || !info[1]->IsFunction(), "Wrong arguments");
-            
-            Problem* lp = ObjectWrap::Unwrap<Problem>(info.Holder());
-            V8CHECK(!lp->handle, "object deleted");
-            V8CHECK(lp->thread, "an async operation is inprogress");
-            
-            Nan::Callback *callback = new Nan::Callback(info[1].As<Function>());
-            IntoptWorker *worker = new IntoptWorker(callback, lp);
-            if (!IocpInit(&worker->parm, info[0])){
-                worker->Destroy();
-                return;
-            }
-            lp->thread = true;
-            Nan::AsyncQueueWorker(worker);
         }
         
         static NAN_METHOD(ReadLpSync) {
