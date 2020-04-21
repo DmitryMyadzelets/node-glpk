@@ -708,6 +708,9 @@ namespace NodeGLPK {
                     } else if (keystr == "psTmLim"){
                         V8CHECKBOOL(!val->IsInt32(), "psTmLim: should be int32");
                         iocp->ps_tm_lim = val->Int32Value();
+                    } else if (keystr == "srHeur"){
+                        V8CHECKBOOL(!val->IsInt32(), "srHeur: should be int32");
+                        iocp->sr_heur = val->Int32Value();
                     } else if (keystr == "useSol"){
                         V8CHECKBOOL(!val->IsInt32(), "useSol: should be int32");
                         iocp->use_sol = val->Int32Value();
