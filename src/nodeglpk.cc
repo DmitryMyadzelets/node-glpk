@@ -18,7 +18,7 @@ extern "C" {
     int _TermHook(void *info, const char *s){
         fputs(s, stdout);
         fflush(stdout);
-        return 0;
+        return 1;
     }
 
     NAN_METHOD(TermOutput) {
